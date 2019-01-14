@@ -1,0 +1,151 @@
+---
+title: "Lab1_exercises_tidyverse"
+author: "Joann Phan"
+output:
+  html_document: default
+---
+
+## The tibbles chapter (Ch 10 online)
+
+###1. Create a small tibble manually.###
+
+```{r}
+library(tidyverse)
+df1 <- tibble(fruits = c("apple", "banana", "blueberries", "pears"),
+              calories_per_serving = c(95, 105, 85, 102),
+              grams_per_serving = c(182, 118, 148, 178),
+              fiber = c(4.4, 3.1, 3.6, 6))
+```
+
+###2. Do exercises 1,2,4,5,6 from this chapter.###
+
+1.  How can you tell if an object is a tibble? (Hint: try printing mtcars, which is a regular data frame).
+  
+  **Response:** you can type in ```print(df1)``` to see what it is. The output says it is a tibble: 4 x 4
+      
+2. Compare and contrast the following operations on a data.frame and equivalent tibble. What is different? Why might the default data frame behaviours cause you frustration?
+```{r}
+df <- data.frame(abc = 1, xyz = "a")
+df$x
+df[, "xyz"]
+df[, c("abc", "xyz")]
+```
+  **Response:** The dataframe calls a as a factor while the tibble calls the a as a character (chr). The default data frame behaviours cuase frustration because you may not intend your data to be a factor. For the dataframe, when you type in df$x, it is recognized. When you do that to a tibble, it does not know what it is and you have to type in the full column name xyz. 
+
+3. If you have the name of a variable stored in an object, e.g. var <- "mpg", how can you extract the reference variable from a tibble?
+  
+  **Response:** You can extract it with df[[var]]
+  
+4. Practice referring to non-syntactic names in the following data frame by: (I changed the numbers to letters)
+```{r}
+annoying <- tibble(
+  a = 1:10,
+  b = a * 2 + rnorm(length(a))
+)
+```
+  1. Extracting the variable called 1 (which I changed to a)
+    
+    **Response:**
+    ```{r}
+    annoying$a
+    ```
+
+  2. Plotting a scatterplot of 1 vs 2 (which I changed to a and b)
+    
+    **Response:**
+    ```{r}
+    ggplot(data = annoying, aes(x = a, y = b)) + geom_point()
+    ```
+
+  
+  3. Creating a new column called c which is b divided by a.
+    
+    **Response:**
+    ```{r}
+    annoying <- annoying %>% 
+      mutate(c = b/a)
+    ```
+
+  4. Renaming the columns to one, two and three.
+    
+    **Response:**
+    ```{r}
+    colnames(annoying) <- c("one", "two", "three")
+    ```
+
+5. What does tibble::enframe() do? When might you use it?
+  
+  **Response:** according to the help manual, enframe() converts named atomic vectors or lists to two-column data frames. I might use it when I need to make a tibble. 
+
+6. What option controls how many additional column names are printed at the footer of a tibble?
+  
+  **Response:** n_extra is an argument that sets how many extra columns of information are given
+
+##The readr chapter 8 ## (Ch 11 online)
+In the first set of chapter questions, do questions 1, 2, and 4.
+
+1. What function would you use to read a file where fields were separated with “|”?
+  
+  **Response:** To read a file where fields are separated with "|", you can use ```read_delim("file_name.txt", sep = "|")```
+
+2. Apart from file, skip, and comment, what other arguments do ```read_csv()``` and ```read_tsv()``` have in common?
+  
+  **Response:** The other arguments that ```read_csv()``` and ```read_tsv()``` have in common are: col_names, col_types, locale, na, quote, comment, trim_ws, skip, n_max, guess_max, and progress
+
+4. Sometimes strings in a CSV file contain commas. To prevent them from causing problems they need to be surrounded by a quoting character, like " or '. By convention, read_csv() assumes that the quoting character will be ", and if you want to change it you’ll need to use read_delim() instead. What arguments do you need to specify to read the following text into a data frame? 
+
+```{r}
+"x,y\n1,'a,b'"
+```
+
+  **Response:** The arguments are:
+```{r}
+d <- "x,y\n1,'a,b'"
+read_delim(d, ",", quote = "'")
+```
+  
+##The tidy chapter 9 (Ch 12 online)
+Note: there is an annoyance in this chapter. The data sets, table1, etc., may have to be referred to as tidyr::table1.
+
+Do the following:
+1. Exercise 3 in the first set of exercises.
+3. Recreate the plot showing change in cases over time using table2 instead of table1. What do you need to do first?
+  
+  **Response:** The difference between table1 and table2 is that table2 has a type column that has cases and population. In order to recreate the plot showing change in cases over time using table2, I first need to spread the type column into cases and population columns. 
+```{r}
+table2 %>%
+  spread(key = type, value = count) %>%
+  ggplot(., aes(x = year, y = cases)) +
+  geom_line(aes(group = country)) +
+  geom_point(aes(color = country))
+```
+
+2. Exercise 2 in the second set of exercises
+2. Why does this code fail?
+  
+  **Response:** In the code above, the years are seen as integers and not column names. They need to be quoted with ''
+
+##The “database-like stuff” with dplyr chapter 10 (Ch 13 online)
+1. Exercise 1 in second set of exercises
+1. Add a surrogate key to flights.
+
+  **Response:** 
+```{r}
+library(nycflights13)
+flights <- flights %>%
+  arrange(year, month, day, sched_dep_time, carrier, flight) %>%
+  mutate(flight_id = row_number())
+```
+
+2. Exercise 2 in the third set of exercises
+2. Add the location of the origin and destination (i.e. the lat and lon) to flights.
+
+  **Response:**
+```{r}
+airports <- airports %>%
+  select(lat, lon, faa)
+flights <- flights %>%
+  left_join(airports, c("origin" = "faa")) %>%
+  left_join(airports, c("dest" = "faa"))
+```
+  
